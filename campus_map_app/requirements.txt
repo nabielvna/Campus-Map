@@ -1,0 +1,8 @@
+Flask
+pandas
+haversine
+osmnx
+shapely
+scipy
+scikit-learn
+Werkzeug

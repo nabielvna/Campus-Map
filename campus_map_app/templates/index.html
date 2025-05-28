@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITS Navigator</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+    <div id="map"></div>
+    
+    <div id="search-panel">
+        <div class="search-header">
+            <h3><i class="fas fa-route"></i>ITS Navigator</h3>
+            <button id="toggle-panel" class="toggle-panel-btn" title="Minimize panel">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        </div>
+        
+        <div class="search-content">
+            <div class="search-container">
+                <!-- From Input -->
+                <div class="search-group">
+                    <div class="search-input-wrapper">
+                        <i class="fas fa-circle start-dot"></i>
+                        <input 
+                            type="text" 
+                            id="start-search" 
+                            placeholder="From..." 
+                            autocomplete="off"
+                            data-type="start"
+                        />
+                        <div class="search-dropdown" id="start-dropdown"></div>
+                    </div>
+                </div>
+
+                <!-- Swap Button -->
+                <button id="swap-btn" class="swap-button" title="Swap locations">
+                    <i class="fas fa-exchange-alt"></i>
+                </button>
+
+                <!-- To Input -->
+                <div class="search-group">
+                    <div class="search-input-wrapper">
+                        <i class="fas fa-circle end-dot"></i>
+                        <input 
+                            type="text" 
+                            id="end-search" 
+                            placeholder="To..." 
+                            autocomplete="off"
+                            data-type="end"
+                        />
+                        <div class="search-dropdown" id="end-dropdown"></div>
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                <button id="find-route" class="route-button" disabled>
+                    <i class="fas fa-directions"></i>
+                    Find Route
+                </button>
+            </div>
+
+            <!-- Route Info -->
+            <div id="route-summary" class="route-summary" style="display: none;">
+                <div class="route-stats">
+                    <span class="stat">
+                        <i class="fas fa-ruler-horizontal"></i>
+                        <span id="route-distance">-</span>
+                    </span>
+                    <span class="stat">
+                        <i class="fas fa-clock"></i>
+                        <span id="route-time">-</span>
+                    </span>
+                    <button id="clear-route" class="clear-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Minimized Panel  -->
+    <div id="minimized-indicator" class="minimized-indicator" style="display: none;">
+        <button id="restore-panel" class="restore-btn" title="Show search panel (Press H)">
+            <i class="fas fa-search"></i>
+        </button>
+        <div class="mini-route-info" id="mini-route-info" style="display: none;">
+            <span id="mini-distance">-</span>
+        </div>
+    </div>
+
+    <!-- Map Controls -->
+    <div class="map-controls">
+        <button id="locate-btn" class="map-btn" title="Find my location">
+            <i class="fas fa-location-arrow"></i>
+        </button>
+        <button id="layers-btn" class="map-btn active" title="Toggle markers">
+            <i class="fas fa-map-pin"></i>
+        </button>
+    </div>
+
+    <!-- Keyboard Shortcuts  -->
+    <div class="shortcuts-hint">
+        <div class="hint-item">
+            <kbd>H</kbd> <span>Toggle panel</span>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        window.locationsData = {{ nodes | tojson }};
+    </script>
+    
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    
+    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
