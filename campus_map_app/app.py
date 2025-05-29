@@ -2,7 +2,9 @@ from flask import Flask, render_template, request, jsonify
 import pandas as pd
 from shapely import wkt
 import heapq
+import math
 import os
+from haversine import haversine, Unit
 
 app = Flask(__name__)
 
@@ -32,16 +34,22 @@ for _, row in df.iterrows():
     except:
         edge_geom[(u, v)] = []
 
-# Parse nodes 
 nodes_list = []
+node_coords = {}  
+
 for _, row in nodes_df.iterrows():
+    node_id = int(row['node_id'])
+    lat = float(row['y'])
+    lng = float(row['x'])
+    
     node_data = {
-        'id': int(row['node_id']),
-        'lat': float(row['y']),
-        'lng': float(row['x']),
-        'name': row['name'] if pd.notna(row['name']) else f"Node {row['node_id']}"
+        'id': node_id,
+        'lat': lat,
+        'lng': lng,
+        'name': row['name'] if pd.notna(row['name']) else f"Node {node_id}"
     }
     nodes_list.append(node_data)
+    node_coords[node_id] = (lat, lng)
 
 # Sort nodes
 nodes_list.sort(key=lambda x: (pd.isna(x['name']) or x['name'].startswith('Node'), x['name']))
@@ -60,17 +68,35 @@ def get_nodes():
     named_nodes = [n for n in nodes_list if not n['name'].startswith('Node')]
     return jsonify(named_nodes)
 
-# Dijkstra 
-def dijkstra(start, end):
+# Heuristic
+def heuristic(node1, node2):
+    if node1 not in node_coords or node2 not in node_coords:
+        return 0
+    
+    lat1, lng1 = node_coords[node1]
+    lat2, lng2 = node_coords[node2]
+    
+    point1 = (lat1, lng1)
+    point2 = (lat2, lng2)
+    
+    # Calculate distance in meters
+    distance = haversine(point1, point2, unit=Unit.METERS)
+    
+    return distance
+
+# A* Algorithm
+def astar(start, end):
     if start not in weight or end not in weight:
         return None
-        
-    queue = [(0, start, [start])]
+    
+    # Priority queue: (f_score, g_score, node, path)
+    queue = [(heuristic(start, end), 0, start, [start])]
     visited = set()
-    distances = {start: 0}
+    g_scores = {start: 0}
+    f_scores = {start: heuristic(start, end)} 
 
     while queue:
-        dist, node, path = heapq.heappop(queue)
+        f_score, g_score, node, path = heapq.heappop(queue)
         
         if node == end:
             return path
@@ -82,10 +108,16 @@ def dijkstra(start, end):
 
         for neighbor, edge_weight in weight.get(node, {}).items():
             if neighbor not in visited:
-                new_dist = dist + edge_weight
-                if neighbor not in distances or new_dist < distances[neighbor]:
-                    distances[neighbor] = new_dist
-                    heapq.heappush(queue, (new_dist, neighbor, path + [neighbor]))
+                tentative_g_score = g_score + edge_weight
+                
+                # If this path to neighbor is better than any previous one
+                if neighbor not in g_scores or tentative_g_score < g_scores[neighbor]:
+                    g_scores[neighbor] = tentative_g_score
+                    h_score = heuristic(neighbor, end)
+                    f_score = tentative_g_score + h_score
+                    f_scores[neighbor] = f_score
+                    
+                    heapq.heappush(queue, (f_score, tentative_g_score, neighbor, path + [neighbor]))
     
     return None
 
@@ -98,7 +130,7 @@ def route():
     except (TypeError, ValueError):
         return jsonify({'error': 'Invalid node IDs'}), 400
 
-    path = dijkstra(start, end)
+    path = astar(start, end)
 
     if not path:
         return jsonify({'error': 'No route found between selected locations'}), 404
