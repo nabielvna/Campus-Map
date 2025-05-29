@@ -1,0 +1,14 @@
+[variables]
+NIXPACKS_PYTHON_VERSION = "3.12"
+
+[phases.setup]
+nixPkgs = ["python312", "python312Packages.pip"]
+
+[phases.install]
+cmds = ["pip install -r campus_map_app/requirements.txt"]
+
+[phases.build]
+cmds = ["python data_builder/nodes_to_graph.py"]
+
+[start]
+cmd = "cd campus_map_app && python app.py"
