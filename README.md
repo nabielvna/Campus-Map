@@ -195,8 +195,16 @@ export const MARKER_COLORS = {
 
 ### **A (A-star) Algorithm**
 A* algorithm implementation for finding optimal shortest path using heuristic search:
+### **A (A-star) Algorithm**
+A* algorithm implementation for finding optimal shortest path using heuristic search:
 
 ```python
+def astar(start, end):
+    if start not in weight or end not in weight:
+        return None
+    
+    # Priority queue: (f_score, g_score, node, path)
+    queue = [(heuristic(start, end), 0, start, [start])]
 def astar(start, end):
     if start not in weight or end not in weight:
         return None
@@ -206,8 +214,11 @@ def astar(start, end):
     visited = set()
     g_scores = {start: 0} 
     f_scores = {start: heuristic(start, end)} 
+    g_scores = {start: 0} 
+    f_scores = {start: heuristic(start, end)} 
 
     while queue:
+        f_score, g_score, node, path = heapq.heappop(queue)
         f_score, g_score, node, path = heapq.heappop(queue)
         
         if node == end:
@@ -229,6 +240,15 @@ def astar(start, end):
                     f_scores[neighbor] = f_score
                     
                     heapq.heappush(queue, (f_score, tentative_g_score, neighbor, path + [neighbor]))
+                tentative_g_score = g_score + edge_weight
+                
+                if neighbor not in g_scores or tentative_g_score < g_scores[neighbor]:
+                    g_scores[neighbor] = tentative_g_score
+                    h_score = heuristic(neighbor, end)
+                    f_score = tentative_g_score + h_score
+                    f_scores[neighbor] = f_score
+                    
+                    heapq.heappush(queue, (f_score, tentative_g_score, neighbor, path + [neighbor]))
     
     return None
 ```
@@ -236,6 +256,24 @@ def astar(start, end):
 ### **Haversine Distance Calculation**
 For calculating accurate distances between coordinates:
 
+For A*
+```python
+def heuristic(node1, node2):
+    if node1 not in node_coords or node2 not in node_coords:
+        return 0
+    
+    lat1, lng1 = node_coords[node1]
+    lat2, lng2 = node_coords[node2]
+    
+    point1 = (lat1, lng1)
+    point2 = (lat2, lng2)
+    
+    distance = haversine(point1, point2, unit=Unit.METERS)
+    
+    return distance
+```
+
+To incorporate custom nodes into the graph
 For A*
 ```python
 def heuristic(node1, node2):
@@ -271,6 +309,37 @@ def get_nearest_node(lon, lat):
             nearest_node = node_id
     
     return nearest_node
+```
+
+## 🔄 Updates & Improvements
+
+### **Algorithm Enhancement: Dijkstra → A***
+
+**Previous Implementation**
+- Used **Dijkstra algorithm** for pathfinding
+- Uninformed search - explores all directions equally
+- Guaranteed optimal path but slower performance
+- No heuristic guidance for search direction
+
+**Current Implementation**
+- Upgraded to **A* (A-star) algorithm** with haversine heuristic
+- Informed search - prioritizes promising directions
+- Maintains optimal path guarantee with better performance
+- Uses geographical distance as intelligent guidance
+
+### **Key Improvements Made**
+
+#### **1. Performance Enhancement**
+```python
+# Before: Dijkstra - O((V + E) log V)
+def dijkstra(start, end):
+    # Explores nodes uniformly in all directions
+    # No guidance toward goal
+    
+# After: A* - O(b^d) where b is branching factor, d is depth
+def astar(start, end):
+    # Uses heuristic to guide search toward goal
+    # Dramatically reduces nodes explored
 ```
 
 ## 🔄 Updates & Improvements
